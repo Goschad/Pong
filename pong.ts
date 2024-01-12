@@ -8,7 +8,8 @@ export default function pong(id:any)
   const Background = "#7EE8B4 ";
   const ScoreColor = rgba(0, 0, 0, 0.5);
   let   TimerColor = rgba(0, 0, 0, 0.5);
-
+  const background = new Image();
+  background.src = tunsinge;
 
   // size of canvas
 
@@ -130,7 +131,7 @@ export default function pong(id:any)
 
   function DrawPongZone() 
   {
-    DrawMap();
+    ctx.drawImage(background, 0, 0, PongWidth, PongHeight);
 
     ctx.fillStyle = rgba(0, 0, 0, 0.2);
 
@@ -174,14 +175,6 @@ export default function pong(id:any)
       if (Paddle2.y + Paddle2Speed < PongHeight - Paddle2.height)
         Paddle2.y += Paddle2Speed;
     }
-  };
-
-  function DrawMap()
-  {
-    const background = new Image();
-    background.src = tunsinge;
-
-    ctx.drawImage(background, 0, 0, PongWidth, PongHeight);
   };
 
   function DrawPaddle() 
