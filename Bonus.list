@@ -1,0 +1,19 @@
+idées :
+
+- mettre un ombre qui suite la balle (tah la vitesse)
+
+- map pas pareil
+
+- afficher les score
+
+Bonus à mettre (idées) :
+
+- Balle invisible quand elle prend le bonus (couleur background)
+
+- Balle supersonic (rapide)
+
+- teleportation ( 2 item [x, y] , si la balle touche l'item x il se tp a y et inversement )
+
+- rapetissire le paddle adverse pendant 10 secondes / balle
+
+- inversion de la map 
