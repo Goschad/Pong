@@ -1,9 +1,9 @@
+import tunsinge from './asset/tunsinge.png';
+
 export default function pong(id:any)
 {
   const canvas = id;
   const ctx = canvas.getContext('2d');
-
-  // visual
 
   const Background = "#7EE8B4 ";
   const ScoreColor = rgba(0, 0, 0, 0.5);
@@ -38,9 +38,9 @@ export default function pong(id:any)
   let BallX = PongWidth / 2;
   let BallY = PongHeight / 2;
 
-  let BallDirX = 4;
-  let BallDirY = Math.random() / 20;
-  let BallVelocity = 1;
+  let BallDirY = 0;
+  let BallVelocity = 1.8;
+  let BallDirX = 2;
 
   // Paddle
 
@@ -102,8 +102,6 @@ export default function pong(id:any)
       DrawElement();
       MovePaddle();
       BallPhysics();
-      if (TimeInM <= 0 && TimeInS <= 0)
-        ResetAll();
       requestAnimationFrame(Update);
     }
   };
@@ -132,20 +130,16 @@ export default function pong(id:any)
 
   function DrawPongZone() 
   {
-    ctx.fillStyle = Background;
-
-    ctx.beginPath();
-    ctx.fillRect(0, 0, PongWidth, PongHeight);
-    ctx.closePath();
+    DrawMap();
 
     ctx.fillStyle = rgba(0, 0, 0, 0.2);
 
     ctx.beginPath();
-    ctx.fillRect((PongWidth / 2) - 5, 0, 10, PongHeight - (PongHeight / 6));
+    ctx.fillRect((PongWidth / 2) - 5, (PongHeight / 6), 10, PongHeight);
     ctx.closePath();
   };
 
-  function Goal(LastedTouch: Number)
+  function Goal(LastedTouch: number)
   {
     if (LastedTouch === 1)
       PlayerScore1 += 1;
@@ -158,6 +152,7 @@ export default function pong(id:any)
 
   function MovePaddle()
   {
+    console.log(keysState);
     if (keysState["ArrowLeft"])
     {
       if (Paddle1.y - Paddle1Speed > 0)
@@ -179,6 +174,14 @@ export default function pong(id:any)
       if (Paddle2.y + Paddle2Speed < PongHeight - Paddle2.height)
         Paddle2.y += Paddle2Speed;
     }
+  };
+
+  function DrawMap()
+  {
+    const background = new Image();
+    background.src = tunsinge;
+
+    ctx.drawImage(background, 0, 0, PongWidth, PongHeight);
   };
 
   function DrawPaddle() 
@@ -207,23 +210,13 @@ export default function pong(id:any)
 
   function DrawTimer(Min: number, Sec: number)
   {
-    ctx.fillStyle = ScoreColor;
+    ctx.fillStyle = TimerColor;
     ctx.font = "bold 70px Poppins";
     ctx.textAlign = "center";
     if (TimeInS < 10)
-      ctx.fillText(TimeInM + ':' + TimeInS + 0, (PongWidth / 2), PongHeight - (PongHeight / 20) + 5);
+      ctx.fillText(TimeInM + ':' + TimeInS + 0, PongWidth / 2, PongHeight / 8);
     else
-      ctx.fillText(TimeInM + ':' + TimeInS, (PongWidth / 2), PongHeight - (PongHeight / 20) + 5);
-    setInterval(() => {
-
-        TimeInS -= 1;
-        if (TimeInS < 0)
-        {
-          TimeInS = 59;
-          TimeInM -= 1;
-        }
-        return ;
-    }, 1000);
+      ctx.fillText(TimeInM + ':' + TimeInS, PongWidth / 2, PongHeight / 8);
   };
 
   // BALL //
@@ -232,7 +225,7 @@ export default function pong(id:any)
   {
       ctx.strokeStyle = BallStroke;
       ctx.fillStyle = BallColor;
-      ctx.lineWidth = 1
+      ctx.lineWidth = 1;
 
       ctx.beginPath();
       ctx.arc(BallX, BallY, BallRay, 0, Math.PI * 2, false);
@@ -243,53 +236,90 @@ export default function pong(id:any)
 
   function ResetBallStats()
   {
-      LastedTouch *= -1;
       BallRay = 10;
-      BallVelocity = 1;
+      BallVelocity = 1.8;
       BallX = PongWidth / 2;
       BallY = PongHeight / 2;
-      BallDirX = (4 * LastedTouch);
+      BallDirX = (2 * LastedTouch) * BallVelocity;
+      BallDirY = 0;
   };
 
   // PHYSICS //
 
   function BallPhysics()
   {
-    WallColision();
-    GoalColision();
-    PaddleColision(Paddle1);
-    PaddleColision(Paddle2);
+    PaddleColision();
+    WallColision(); 
 
-    BallX += BallDirX;
+    BallX += (BallDirX * BallVelocity);
     BallY += BallDirY;
+    console.log(BallVelocity);
   };
 
-  function GoalColision()
+  function BallMovement(Paddle: any)
   {
-    if (BallX + BallRay >= PongWidth || BallX - BallRay <= 0)
-      Goal(LastedTouch);
+    const ImpactY = (Paddle.y - BallY) * -1;
+    
+    if (ImpactY <= Paddle.height / 5)
+    {
+      BallDirX = 3;
+      BallDirY = -3;
+    }
+    else if (ImpactY <= (Paddle.height / 5) * 2)
+    {
+      BallDirX = 3;
+      BallDirY = -1;
+    }
+    else if (ImpactY <= (Paddle.height / 5) * 3)
+    {
+      BallDirX = 3;
+      BallDirY = 0;
+    }
+    else if (ImpactY <= (Paddle.height / 5) * 4)
+    {
+      BallDirX = 3;
+      BallDirY = 1;
+    }
+    else if (ImpactY <= Paddle.height)
+    {
+      BallDirX = 3;
+      BallDirY = 3;
+    }
+
   };
 
   function WallColision()
   {
-    if (BallY + BallRay >= PongHeight)
-      BallY *= -1;
+    if (BallY - BallRay <= 0 || BallY + BallRay >= PongHeight)
+      BallDirY *= -1;
+    else if (BallX + BallRay >= PongWidth || BallX - BallRay <= 0)
+      Goal(LastedTouch);
   };
 
-  function PaddleColision(Paddle: any)
+  function PaddleColision()
   {
-    let dx = Math.abs(BallX - Paddle.x - Paddle.width / 2);
-    let dy = Math.abs(BallY - Paddle.y - Paddle.height / 2);
+    let dx1 = Math.abs(BallX - Paddle1.x - Paddle1.width / 2);
+    let dy1 = Math.abs(BallY - Paddle1.y - Paddle1.height / 2);
 
-    if (dx <= (BallRay + Paddle.width / 2) && dy <= ((Paddle.height / 2) + BallRay))
+    let dx2 = Math.abs(BallX - Paddle2.x - Paddle2.width / 2);
+    let dy2 = Math.abs(BallY - Paddle2.y - Paddle2.height / 2);
+
+    if (dx1 <= (BallRay + Paddle1.width / 2) && dy1 <= ((Paddle1.height / 2) + BallRay))
     {
-      BallDirX *= -1;
-      BallVelocity += 0.05;
+      BallMovement(Paddle1);
+      if (BallVelocity < 4)
+        BallVelocity += 0.3;
       LastedTouch *= -1;
-      return ;
+    }
+    else if (dx2 <= (BallRay + Paddle2.width / 2) && dy2 <= ((Paddle2.height / 2) + BallRay))
+    {
+      BallMovement(Paddle2);
+      BallDirX *= -1;
+      if (BallVelocity < 4)
+        BallVelocity += 0.3;
+      LastedTouch *= -1;
     }
   };
-
 }
 
 // DRAW //
