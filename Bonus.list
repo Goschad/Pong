@@ -17,3 +17,13 @@ Bonus à mettre (idées) :
 - rapetissire le paddle adverse pendant 10 secondes / balle
 
 - inversion de la map 
+
+ne rien faire
+
+Bonus Effect :
+
+Balle invisible = 0;
+
+Balle rapide = 1;
+
+paddle = 2

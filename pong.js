@@ -78,6 +78,7 @@ const ctx = canvas.getContext('2d');
     ray: 10,
     doubleBonus: false,
     BonusColor: 'white',
+    BonusType: -1,
     x2: 0,
     y2: 0
   }
@@ -144,7 +145,7 @@ const ctx = canvas.getContext('2d');
     setTimeout(() => {
       if (BonusIsHere == false)
         BonusEvent();
-    }, 10000)
+    }, 1000)
     DrawScore(PlayerScore1, PlayerScore2);
     DrawTimer(TimeInM, TimeInS);
     DrawBonusItem();
@@ -175,6 +176,8 @@ const ctx = canvas.getContext('2d');
       PlayerScore1 += 1;
     else
       PlayerScore2 += 1;
+    if (BonusStatus == true)
+      ResetBonusEffect(BonusPos.BonusType);
     ResetBallStats();
   };
 
@@ -193,12 +196,12 @@ const ctx = canvas.getContext('2d');
         Paddle1.y += Paddle1Speed;
     }
 
-    if (keysState["a"])
+    if (keysState["ArrowUp"])
     {
       if (Paddle2.y - Paddle2Speed > 0)
         Paddle2.y -= Paddle2Speed;
     }
-    else if (keysState["d"])
+    else if (keysState["ArrowDown"])
     {
       if (Paddle2.y + Paddle2Speed < PongHeight - Paddle2.height)
         Paddle2.y += Paddle2Speed;
@@ -330,7 +333,9 @@ const ctx = canvas.getContext('2d');
       BallMovement(Paddle1);
       if (BallVelocity < 4)
         BallVelocity += 0.3;
-      LastedTouch *= -1;
+      LastedTouch = 1;
+      if (BonusOn == true)
+        ResetBonusEffect(BonusPos.BonusType);
     }
     else if (dx2 <= (BallRay + Paddle2.width / 2) && dy2 <= ((Paddle2.height / 2) + BallRay))
     {
@@ -338,7 +343,9 @@ const ctx = canvas.getContext('2d');
       BallDirX *= -1;
       if (BallVelocity < 4)
         BallVelocity += 0.3;
-      LastedTouch *= -1;
+      LastedTouch = -1;
+      if (BonusOn == true)
+        ResetBonusEffect(BonusPos.BonusType);
     }
   };
 
@@ -359,21 +366,33 @@ const ctx = canvas.getContext('2d');
     if (BonusStatus === false || BonusIsHere == true)
       return ;
 
-    const randomBonus = getRandomInt(0, 3);;
+    const randomBonus = getRandomInt(0, 3);
     console.log(randomBonus);
 
     if (randomBonus == 0)
     {
-      BonusColor = 'red';
-
+      BonusPos.BonusColor = 'red';
+      BonusPos.BonusType = 0;
+      InvisibleBall = true;
     }
     else if (randomBonus == 1)
-      BonusColor = 'pink';
+    {
+      BonusPos.BonusColor = 'pink';
+      BonusPos.BonusType = 1;
+      SuperSpeedBall = true;
+    }
     else if (randomBonus == 2)
     {
       BonusPos.doubleBonus = true;
-      BonusColor = 'green';
+      BonusPos.BonusType = 2;
+      BonusPos.BonusColor = 'green';
     }
+    else if (randomBonus == 3)
+    {
+      BonusPos.BonusType = 3;
+      BonusPos.BonusColor = 'blue';
+    }
+
     AddPosBonus();
     BonusIsHere = true;
   }
@@ -397,7 +416,7 @@ const ctx = canvas.getContext('2d');
     if (BonusIsHere == true)
     {
       ctx.strokeStyle = BallStroke;
-      ctx.fillStyle = 'red';
+      ctx.fillStyle = BonusPos.BonusColor;
       ctx.lineWidth = 1;
 
       ctx.beginPath();
@@ -438,23 +457,52 @@ const ctx = canvas.getContext('2d');
 
   function ActiveBonus(events)
   {
-    // if ()
+    if (BonusPos.doubleBonus == true)
+    {
+      if (events == 0)
+      {
+        BallX = BonusPos.x2;
+        BallY = BonusPos.y2;
+      }
+      else if (events == 1)
+      {
+        BallX = BonusPos.x;
+        BallY = BonusPos.y;
+      }
+      BonusPos.doubleBonus = false;
+      BonusOn = false;
+    }
+    else if (SuperSpeedBall == true)
+    {
+      BallVelocity += 0.5;
+      SuperSpeedBall == false;
+      BonusOn = true;
+    }
+    else if (InvisibleBall == true)
+    {
+      BallColor = rgba(0, 0, 0, 0);
+      BallStroke = rgba(0, 0, 0, 0);
+      InvisibleBall == false;
+      BonusOn = true;
+    }
   };
 
   function ResetBonusEffect(BonusEffect)
   {
+    console.log(BonusEffect);
     if (BonusEffect == 0)
     {
       BallColor = 'white';
       BallStroke = 'black';
     }
     else if (BonusEffect == 1)
-      BallX -= 2;
+      BallVelocity -= 0.5;
     else if (BonusEffect == 2)
     {
       Paddle1.height = 100;
       Paddle2.height = 100;
     }
+    BonusOn = false;
   };
 
 // ------ COLOR ------ ///
