@@ -72,7 +72,22 @@ const ctx = canvas.getContext('2d');
 
   // bonus
 
-  let BonusStatus = false
+  BonusPos = {
+    x: 0,
+    y: 0,
+    ray: 10,
+    doubleBonus: false,
+    BonusColor: 'white',
+    x2: 0,
+    y2: 0
+  }
+
+  let BonusOn = false;
+  let BonusStatus = false;
+  let BonusIsHere = false;
+  let MiniPaddle = false;
+  let InvisibleBall = false;
+  let SuperSpeedBall = false;
 
   // --------------------------------- //
 
@@ -92,6 +107,8 @@ const ctx = canvas.getContext('2d');
 
   function GameStart()
   {
+      StartGame();
+      BonusMode();
       Update()
       DrawElement();
 
@@ -124,9 +141,13 @@ const ctx = canvas.getContext('2d');
   function DrawElement()
   {
     DrawPongZone();
-    // DrawMap();
+    setTimeout(() => {
+      if (BonusIsHere == false)
+        BonusEvent();
+    }, 10000)
     DrawScore(PlayerScore1, PlayerScore2);
     DrawTimer(TimeInM, TimeInS);
+    DrawBonusItem();
     DrawPongBall();
     DrawPaddle();
   };
@@ -135,6 +156,8 @@ const ctx = canvas.getContext('2d');
   {
     ctx.fillStyle = Background;
 
+    ctx.clearRect(0, 0, PongWidth, PongHeight);
+    ctx.clearRect((PongWidth / 2) - 5, 0, 10, PongHeight - (PongHeight / 6));
     ctx.beginPath();
     ctx.fillRect(0, 0, PongWidth, PongHeight);
     ctx.closePath();
@@ -152,7 +175,6 @@ const ctx = canvas.getContext('2d');
       PlayerScore1 += 1;
     else
       PlayerScore2 += 1;
-    // pausecomp(1000);
     ResetBallStats();
   };
 
@@ -160,7 +182,6 @@ const ctx = canvas.getContext('2d');
 
   function MovePaddle()
   {
-    console.log(keysState);
     if (keysState["ArrowLeft"])
     {
       if (Paddle1.y - Paddle1Speed > 0)
@@ -184,20 +205,13 @@ const ctx = canvas.getContext('2d');
     }
   };
 
-  function DrawMap()
-  {
-    const background = new Image();
-    background.src = tunsing;
-
-    ctx.drawImage(background, 0, 0, PongWidth, PongHeight);
-  };
-
   function DrawPaddle() 
   {
     ctx.strokeStyle = PaddleBorder;
     ctx.fillStyle = PaddleColor;
     ctx.lineWidth = 2.5
-  
+    
+    
     ctx.beginPath();
     ctx.fillRect(Paddle1.x, Paddle1.y, Paddle1.width, Paddle1.height);
     ctx.strokeRect(Paddle1.x, Paddle1.y, Paddle1.width, Paddle1.height);
@@ -257,11 +271,11 @@ const ctx = canvas.getContext('2d');
   function BallPhysics()
   {
     PaddleColision();
-    WallColision(); 
+    WallColision();
+    BonusCollision();
 
     BallX += (BallDirX * BallVelocity);
     BallY += BallDirY;
-    console.log(BallVelocity);
   };
 
   function BallMovement(Paddle)
@@ -293,7 +307,6 @@ const ctx = canvas.getContext('2d');
       BallDirX = 3;
       BallDirY = 3;
     }
-
   };
 
   function WallColision()
@@ -329,6 +342,121 @@ const ctx = canvas.getContext('2d');
     }
   };
 
+  // News
+
+  function StartGame()
+  {
+    EndGame = false;
+  };
+
+  function BonusMode()
+  {
+    BonusStatus = true;
+  };
+
+  function BonusEvent()
+  {
+    if (BonusStatus === false || BonusIsHere == true)
+      return ;
+
+    const randomBonus = getRandomInt(0, 3);;
+    console.log(randomBonus);
+
+    if (randomBonus == 0)
+    {
+      BonusColor = 'red';
+
+    }
+    else if (randomBonus == 1)
+      BonusColor = 'pink';
+    else if (randomBonus == 2)
+    {
+      BonusPos.doubleBonus = true;
+      BonusColor = 'green';
+    }
+    AddPosBonus();
+    BonusIsHere = true;
+  }
+
+  function AddPosBonus()
+  {
+    if (BonusPos.doubleBonus == true)
+    {
+      BonusPos.x = getRandomInt(PongWidth / 12, (((PongWidth) / 2) - (PongWidth / 12)));
+      BonusPos.x2 = getRandomInt(PongWidth / 2, ((PongWidth) - (PongWidth / 12)));
+      BonusPos.y = getRandomInt(PongHeight / 12, PongHeight - (PongHeight / 12));
+      BonusPos.y2 = getRandomInt(PongHeight / 12, PongHeight - (PongHeight / 12));
+      return ;
+    }
+    BonusPos.x = getRandomInt(PongWidth / 12, PongWidth - (PongWidth / 12));
+    BonusPos.y = getRandomInt(PongHeight / 12, PongHeight - (PongHeight / 12));
+  };
+
+  function DrawBonusItem()
+  {
+    if (BonusIsHere == true)
+    {
+      ctx.strokeStyle = BallStroke;
+      ctx.fillStyle = 'red';
+      ctx.lineWidth = 1;
+
+      ctx.beginPath();
+      ctx.arc(BonusPos.x, BonusPos.y, BonusPos.ray, 0, Math.PI * 2, false);
+      ctx.fill();
+      ctx.stroke();
+      ctx.closePath();
+
+      if (BonusPos.doubleBonus == true)
+      {
+        ctx.beginPath();
+        ctx.arc(BonusPos.x2, BonusPos.y2, BonusPos.ray, 0, Math.PI * 2, false);
+        ctx.fill();
+        ctx.stroke();
+        ctx.closePath();
+      }
+    }
+  };
+
+  function BonusCollision()
+  {
+    if (BonusIsHere == false)
+      return ;
+
+    if ((BallY + BallRay >= BonusPos.y - BonusPos.ray && BallY - BallRay <= BonusPos.y + BonusPos.ray)
+      && (BallX + BallRay >= BonusPos.x - BonusPos.ray && BallX - BallRay <= BonusPos.x + BonusPos.ray))
+    {
+      BonusIsHere = false;
+      ActiveBonus(0);
+    }
+    else if (BonusPos.doubleBonus && (BallY + BallRay >= BonusPos.y2 - BonusPos.ray && BallY - BallRay <= BonusPos.y2 + BonusPos.ray)
+      && (BallX + BallRay >= BonusPos.x2 - BonusPos.ray && BallX - BallRay <= BonusPos.x2 + BonusPos.ray))
+    {
+      BonusIsHere = false;
+      AciveBonus(1);
+    }
+  };
+
+  function ActiveBonus(events)
+  {
+    // if ()
+  };
+
+  function ResetBonusEffect(BonusEffect)
+  {
+    if (BonusEffect == 0)
+    {
+      BallColor = 'white';
+      BallStroke = 'black';
+    }
+    else if (BonusEffect == 1)
+      BallX -= 2;
+    else if (BonusEffect == 2)
+    {
+      Paddle1.height = 100;
+      Paddle2.height = 100;
+    }
+  };
+
 // ------ COLOR ------ ///
 
 function rgba(r, g, b, a) 
@@ -336,10 +464,29 @@ function rgba(r, g, b, a)
   return `rgba(${r}, ${g}, ${b}, ${a})`
 };
 
-function pausecomp(millis)
+// lplp //
+
+function getRandomInt(min, max) 
 {
-    var date = new Date();
-    var curDate = null;
-    do { curDate = new Date(); }
-    while(curDate-date < millis);
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// return 
+
+/*
+return {
+
+  start: function()
+  {
+    StartGame();
+  },
+
+  activeBonus: function()
+  {
+    BonusMode();
+  },
+
 };
+*/
