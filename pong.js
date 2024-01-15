@@ -43,10 +43,12 @@ const ctx = canvas.getContext('2d');
   let BallY = PongHeight / 2;
 
   let BallDirY = 0;
-  let BallVelocity = 1.8;
+  let BallVelocity = 2.4;
   let BallDirX = 2;
 
   // Paddle
+
+  const HeightPaddle = 100;
 
   const PaddleColor = "white";
   const PaddleBorder = "black";
@@ -57,7 +59,7 @@ const ctx = canvas.getContext('2d');
   let Paddle1 = 
   {
       width: 15,
-      height: 100,
+      height: HeightPaddle,
       x: 0,
       y: (PongHeight / 2) - 50
   }
@@ -65,7 +67,7 @@ const ctx = canvas.getContext('2d');
   let Paddle2 = 
   {
       width: 15,
-      height: 100,
+      height: HeightPaddle,
       x: PongWidth - 15,
       y: (PongHeight / 2) - 50
   }
@@ -75,20 +77,21 @@ const ctx = canvas.getContext('2d');
   BonusPos = {
     x: 0,
     y: 0,
-    ray: 10,
-    doubleBonus: false,
-    BonusColor: 'white',
-    BonusType: -1,
+    ray: 15,
     x2: 0,
-    y2: 0
+    y2: 0,
+    BonusColor: 'white',
+    BonusStroke: 'black',
+    BonusType: -1
   }
 
   let BonusOn = false;
   let BonusStatus = false;
   let BonusIsHere = false;
-  let MiniPaddle = false;
+  let TeleportEffect = false;
   let InvisibleBall = false;
-  let SuperSpeedBall = false;
+  let SpeedEffect = false;
+  let PaddleEffect = false;
 
   // --------------------------------- //
 
@@ -142,10 +145,7 @@ const ctx = canvas.getContext('2d');
   function DrawElement()
   {
     DrawPongZone();
-    setTimeout(() => {
-      if (BonusIsHere == false)
-        BonusEvent();
-    }, 1000)
+    SpawnBonus();
     DrawScore(PlayerScore1, PlayerScore2);
     DrawTimer(TimeInM, TimeInS);
     DrawBonusItem();
@@ -176,9 +176,8 @@ const ctx = canvas.getContext('2d');
       PlayerScore1 += 1;
     else
       PlayerScore2 += 1;
-    if (BonusStatus == true)
-      ResetBonusEffect(BonusPos.BonusType);
     ResetBallStats();
+    ResetBonusStats(BonusPos.BonusType);
   };
 
   // PADDLE //
@@ -259,13 +258,35 @@ const ctx = canvas.getContext('2d');
       ctx.closePath();
   };
 
+  function ResetBonusStats(type)
+  {
+    BonusOn = false;
+    if (type == 0)
+    {
+      BallColor = 'white';
+      BallStroke = 'black';
+      InvisibleBall = false;
+    }
+    else if (type == 1)
+    {
+      BallVelocity -= 1.8;
+      SpeedEffect = false;
+    }
+    else if (type == 3)
+    {
+      PaddleEffect = false;
+      Paddle1.height = HeightPaddle;
+      Paddle2.height = HeightPaddle;
+    }
+  };
+
   function ResetBallStats()
   {
       BallRay = 10;
-      BallVelocity = 1.8;
+      BallVelocity = 2.4;
       BallX = PongWidth / 2;
       BallY = PongHeight / 2;
-      BallDirX = (2 * LastedTouch) * BallVelocity;
+      BallDirX = 2 * LastedTouch;
       BallDirY = 0;
   };
 
@@ -334,8 +355,8 @@ const ctx = canvas.getContext('2d');
       if (BallVelocity < 4)
         BallVelocity += 0.3;
       LastedTouch = 1;
-      if (BonusOn == true)
-        ResetBonusEffect(BonusPos.BonusType);
+      if (InvisibleBall == true || SpeedEffect == true)
+        ResetBonusStats(BonusPos.BonusType);
     }
     else if (dx2 <= (BallRay + Paddle2.width / 2) && dy2 <= ((Paddle2.height / 2) + BallRay))
     {
@@ -344,8 +365,8 @@ const ctx = canvas.getContext('2d');
       if (BallVelocity < 4)
         BallVelocity += 0.3;
       LastedTouch = -1;
-      if (BonusOn == true)
-        ResetBonusEffect(BonusPos.BonusType);
+      if (InvisibleBall == true || SpeedEffect == true)
+        ResetBonusStats(BonusPos.BonusType);
     }
   };
 
@@ -361,30 +382,35 @@ const ctx = canvas.getContext('2d');
     BonusStatus = true;
   };
 
+  function SpawnBonus()
+  {
+    setTimeout(() => {
+      if (BonusIsHere == false)
+        BonusEvent();
+    }, 1000)
+  };
+
   function BonusEvent()
   {
-    if (BonusStatus === false || BonusIsHere == true)
+    if (BonusStatus === false || BonusIsHere == true || BonusOn == true)
       return ;
 
     const randomBonus = getRandomInt(0, 3);
-    console.log(randomBonus);
 
     if (randomBonus == 0)
     {
       BonusPos.BonusColor = 'red';
       BonusPos.BonusType = 0;
-      InvisibleBall = true;
     }
     else if (randomBonus == 1)
     {
       BonusPos.BonusColor = 'pink';
       BonusPos.BonusType = 1;
-      SuperSpeedBall = true;
     }
     else if (randomBonus == 2)
     {
-      BonusPos.doubleBonus = true;
       BonusPos.BonusType = 2;
+      TeleportEffect = true;
       BonusPos.BonusColor = 'green';
     }
     else if (randomBonus == 3)
@@ -392,30 +418,29 @@ const ctx = canvas.getContext('2d');
       BonusPos.BonusType = 3;
       BonusPos.BonusColor = 'blue';
     }
-
     AddPosBonus();
     BonusIsHere = true;
   }
 
   function AddPosBonus()
   {
-    if (BonusPos.doubleBonus == true)
+    if (TeleportEffect == true)
     {
-      BonusPos.x = getRandomInt(PongWidth / 12, (((PongWidth) / 2) - (PongWidth / 12)));
-      BonusPos.x2 = getRandomInt(PongWidth / 2, ((PongWidth) - (PongWidth / 12)));
+      BonusPos.x = getRandomInt(PongWidth / 8, (((PongWidth) / 2) - (PongWidth / 8)));
+      BonusPos.x2 = getRandomInt((PongWidth / 2) + (PongWidth / 8), ((PongWidth) - (PongWidth / 8)));
       BonusPos.y = getRandomInt(PongHeight / 12, PongHeight - (PongHeight / 12));
       BonusPos.y2 = getRandomInt(PongHeight / 12, PongHeight - (PongHeight / 12));
       return ;
     }
-    BonusPos.x = getRandomInt(PongWidth / 12, PongWidth - (PongWidth / 12));
-    BonusPos.y = getRandomInt(PongHeight / 12, PongHeight - (PongHeight / 12));
+    BonusPos.x = getRandomInt(PongWidth / 8, PongWidth - (PongWidth / 8));
+    BonusPos.y = getRandomInt(PongHeight / 8, PongHeight - (PongHeight / 8));
   };
 
   function DrawBonusItem()
   {
     if (BonusIsHere == true)
     {
-      ctx.strokeStyle = BallStroke;
+      ctx.strokeStyle = BonusPos.BonusStroke;
       ctx.fillStyle = BonusPos.BonusColor;
       ctx.lineWidth = 1;
 
@@ -425,7 +450,7 @@ const ctx = canvas.getContext('2d');
       ctx.stroke();
       ctx.closePath();
 
-      if (BonusPos.doubleBonus == true)
+      if (TeleportEffect == true)
       {
         ctx.beginPath();
         ctx.arc(BonusPos.x2, BonusPos.y2, BonusPos.ray, 0, Math.PI * 2, false);
@@ -434,6 +459,73 @@ const ctx = canvas.getContext('2d');
         ctx.closePath();
       }
     }
+  };
+
+  function InvisibleBallBonus()
+  {
+    BonusOn = true;
+    BallColor = rgba(0, 0 ,0 ,0);0.
+    BallStroke =  rgba(0, 0 ,0 ,0);
+    InvisibleBall = true;
+  };
+
+  function SpeedBonus()
+  {
+    BallVelocity += 1.8;
+    BonusOn = true;
+    SpeedEffect = true;
+  };
+
+  function PaddleNerfBonus()
+  {
+    PaddleEffect = true;
+    BonusOn = true;
+    if (LastedTouch == 1)
+    {
+      Paddle2.height = HeightPaddle - (HeightPaddle / 4);
+      Paddle1.height = HeightPaddle + HeightPaddle / 6;
+    }
+    else if (LastedTouch == -1)
+    {
+      Paddle1.height = HeightPaddle - (HeightPaddle / 4);
+      Paddle2.height = HeightPaddle + HeightPaddle / 6;
+    }
+
+    setTimeout(() => {
+      ResetBonusStats(BonusPos.BonusType);
+    }, 5000)
+
+  };
+
+  function TeleportBonus()
+  {
+    if (BallX >= PongWidth / 2)
+    {
+      BallX = BonusPos.x;
+      BallY = BonusPos.y;
+    }
+    else
+    {
+      BallX = BonusPos.x2;
+      BallY = BonusPos.y2;
+    }
+    BallVelocity = 3;
+    TeleportEffect = false;
+    BonusPos.BonusType = -1;
+  };
+
+  function LaunchBonus()
+  {
+    console.log("BONUS = " + BonusPos.BonusType);
+
+    if (BonusPos.BonusType == 0)
+      InvisibleBallBonus();
+    else if (BonusPos.BonusType == 1)
+      SpeedBonus();
+    else if (BonusPos.BonusType == 2)
+      TeleportBonus();
+    else if (BonusPos.BonusType == 3)
+      PaddleNerfBonus();
   };
 
   function BonusCollision()
@@ -445,64 +537,14 @@ const ctx = canvas.getContext('2d');
       && (BallX + BallRay >= BonusPos.x - BonusPos.ray && BallX - BallRay <= BonusPos.x + BonusPos.ray))
     {
       BonusIsHere = false;
-      ActiveBonus(0);
+      LaunchBonus();
     }
-    else if (BonusPos.doubleBonus && (BallY + BallRay >= BonusPos.y2 - BonusPos.ray && BallY - BallRay <= BonusPos.y2 + BonusPos.ray)
+    else if (TeleportEffect && (BallY + BallRay >= BonusPos.y2 - BonusPos.ray && BallY - BallRay <= BonusPos.y2 + BonusPos.ray)
       && (BallX + BallRay >= BonusPos.x2 - BonusPos.ray && BallX - BallRay <= BonusPos.x2 + BonusPos.ray))
     {
       BonusIsHere = false;
-      AciveBonus(1);
+      LaunchBonus();
     }
-  };
-
-  function ActiveBonus(events)
-  {
-    if (BonusPos.doubleBonus == true)
-    {
-      if (events == 0)
-      {
-        BallX = BonusPos.x2;
-        BallY = BonusPos.y2;
-      }
-      else if (events == 1)
-      {
-        BallX = BonusPos.x;
-        BallY = BonusPos.y;
-      }
-      BonusPos.doubleBonus = false;
-      BonusOn = false;
-    }
-    else if (SuperSpeedBall == true)
-    {
-      BallVelocity += 0.5;
-      SuperSpeedBall == false;
-      BonusOn = true;
-    }
-    else if (InvisibleBall == true)
-    {
-      BallColor = rgba(0, 0, 0, 0);
-      BallStroke = rgba(0, 0, 0, 0);
-      InvisibleBall == false;
-      BonusOn = true;
-    }
-  };
-
-  function ResetBonusEffect(BonusEffect)
-  {
-    console.log(BonusEffect);
-    if (BonusEffect == 0)
-    {
-      BallColor = 'white';
-      BallStroke = 'black';
-    }
-    else if (BonusEffect == 1)
-      BallVelocity -= 0.5;
-    else if (BonusEffect == 2)
-    {
-      Paddle1.height = 100;
-      Paddle2.height = 100;
-    }
-    BonusOn = false;
   };
 
 // ------ COLOR ------ ///
@@ -512,7 +554,7 @@ function rgba(r, g, b, a)
   return `rgba(${r}, ${g}, ${b}, ${a})`
 };
 
-// lplp //
+// random number //
 
 function getRandomInt(min, max) 
 {
