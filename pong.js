@@ -92,6 +92,7 @@ const ctx = canvas.getContext('2d');
   let InvisibleBall = false;
   let SpeedEffect = false;
   let PaddleEffect = false;
+  let RandomYEffect = false;
 
   // --------------------------------- //
 
@@ -176,8 +177,8 @@ const ctx = canvas.getContext('2d');
       PlayerScore1 += 1;
     else
       PlayerScore2 += 1;
-    ResetBallStats();
     ResetBonusStats(BonusPos.BonusType);
+    ResetBallStats();
   };
 
   // PADDLE //
@@ -260,6 +261,8 @@ const ctx = canvas.getContext('2d');
 
   function ResetBonusStats(type)
   {
+    BonusIsHere = false;
+    TeleportEffect = false;
     BonusOn = false;
     if (type == 0)
     {
@@ -278,6 +281,12 @@ const ctx = canvas.getContext('2d');
       Paddle1.height = HeightPaddle;
       Paddle2.height = HeightPaddle;
     }
+    else if (type == 4)
+    {
+      RandomYEffect = false;
+      BallDirX = 2.4;
+    }
+    // BonusPos.BonusType = -1;
   };
 
   function ResetBallStats()
@@ -395,7 +404,7 @@ const ctx = canvas.getContext('2d');
     if (BonusStatus === false || BonusIsHere == true || BonusOn == true)
       return ;
 
-    const randomBonus = getRandomInt(0, 3);
+    const randomBonus = getRandomInt(0, 4);
 
     if (randomBonus == 0)
     {
@@ -417,6 +426,11 @@ const ctx = canvas.getContext('2d');
     {
       BonusPos.BonusType = 3;
       BonusPos.BonusColor = 'blue';
+    }
+    else if (randomBonus == 4)
+    {
+      BonusPos.BonusType = 4;
+      BonusPos.BonusColor = 'orange';
     }
     AddPosBonus();
     BonusIsHere = true;
@@ -467,6 +481,17 @@ const ctx = canvas.getContext('2d');
     BallColor = rgba(0, 0 ,0 ,0);0.
     BallStroke =  rgba(0, 0 ,0 ,0);
     InvisibleBall = true;
+  };
+
+  function RandomYBonus()
+  {
+    RandomYEffect = true;
+    BallDirX = (1.2 * LastedTouch);
+    setTimeout(() => {
+      BallDirX = (3 * LastedTouch);
+      BallDirY = getRandomInt(-10, 10);
+      RandomYEffect = false;
+    }, 500)
   };
 
   function SpeedBonus()
@@ -526,6 +551,8 @@ const ctx = canvas.getContext('2d');
       TeleportBonus();
     else if (BonusPos.BonusType == 3)
       PaddleNerfBonus();
+      else if (BonusPos.BonusType == 4)
+        RandomYBonus();
   };
 
   function BonusCollision()
