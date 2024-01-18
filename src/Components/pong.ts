@@ -7,22 +7,18 @@ import Nerf from './asset/PowerUp/Nerf.png';
 import Random from './asset/PowerUp/Random.png';
 import Speed from './asset/PowerUp/Speed.png';
 import Teleport from './asset/PowerUp/Teleport.png';
-import { wait } from '@testing-library/user-event/dist/utils';
 
 
 export default function pong(id:any)
 {
   const canvas = id;
-  const ctx = canvas.getContext('2d');
-
-  const Background = "#7EE8B4 ";
+  const ctx = canvas.getContext('2d')
   const ScoreColor = rgba(0, 0, 0, 0.5);
   let   TimerColor = rgba(0, 0, 0, 0.5);
 
   // Assets //
 
-  const background = new Image();
-  background.src = Map3;
+  const background = new Image();  background.src = Map1;
 
   const PowerUp = new Image();
   PowerUp.src = Random;
@@ -91,8 +87,7 @@ export default function pong(id:any)
 
   let BonusPos = {
     x: 0,
-    y: 0,
-    ray: 20,
+    y: 0,    ray: 40,
     x2: 0,
     y2: 0,
     BonusType: -1
@@ -104,7 +99,6 @@ export default function pong(id:any)
   let TeleportEffect = false;
   let InvisibleBall = false;
   let SpeedEffect = false;
-  let PaddleEffect = false;
   let RandomYEffect = false;
 
   // --------------------------------- //
@@ -144,10 +138,6 @@ export default function pong(id:any)
     }
   };
 
-  function addsec(){
-    TimeInM += 1;
-  };
-
   function ResetAll()
   {
     BallX = PongWidth / 2;
@@ -172,7 +162,6 @@ export default function pong(id:any)
     DrawPaddle();
     if (GoalStatus === true)
     {
-      wait(10000);
       GoalStatus = false;
     }
   };
@@ -187,6 +176,16 @@ export default function pong(id:any)
     ctx.beginPath();
     ctx.fillRect((PongWidth / 2) - 5, (PongHeight / 6), 10, PongHeight / 10);
     ctx.closePath();
+  };
+
+  function ChooseMap(choice: number)
+  {
+    if (choice === 0)
+      background.src = Map1;
+    else if (choice === 1)
+      background.src = Map2;
+    else if (choice === 2)
+      background.src = Map3;
   };
 
   function Goal(LastedTouch: number)
@@ -296,7 +295,6 @@ export default function pong(id:any)
     }
     else if (type === 3)
     {
-      PaddleEffect = false;
       Paddle1.height = HeightPaddle;
       Paddle2.height = HeightPaddle;
     }
@@ -424,7 +422,7 @@ export default function pong(id:any)
     setTimeout(() => {
       if (BonusIsHere === false)
         BonusEvent();
-    }, 1000)
+    }, 15000)
   };
 
   function BonusEvent()
@@ -485,7 +483,7 @@ export default function pong(id:any)
       ctx.lineWidth = 1;
 
       ctx.beginPath();
-      ctx.drawImage(PowerUp, BonusPos.x, BonusPos.y, 40, 40);
+      ctx.drawImage(PowerUp, BonusPos.x, BonusPos.y, BonusPos.ray, BonusPos.ray);
       ctx.closePath();
 
       if (TeleportEffect === true)
@@ -526,7 +524,6 @@ export default function pong(id:any)
 
   function PaddleNerfBonus()
   {
-    PaddleEffect = true;
     BonusOn = true;
     if (LastedTouch === 1)
     {
@@ -540,6 +537,7 @@ export default function pong(id:any)
     }
 
     setTimeout(() => {
+
       ResetBonusStats(BonusPos.BonusType);
     }, 5000)
 
@@ -564,8 +562,6 @@ export default function pong(id:any)
 
   function LaunchBonus()
   {
-    console.log("BONUS = " + BonusPos.BonusType);
-
     if (BonusPos.BonusType === 0)
       InvisibleBallBonus();
     else if (BonusPos.BonusType === 1)
@@ -607,6 +603,18 @@ export default function pong(id:any)
     {
       BonusMode();
     },
+
+    selectMap: function(choice: number)
+    {
+      ChooseMap(choice);
+    },
+
+    endGame: function()
+    {
+      ResetBallStats();
+      ResetAll();
+      DrawElement();
+    }
   }
 }
 
